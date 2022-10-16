@@ -35,15 +35,6 @@ void Node::set_children(Node *p, size_t r) { children[r] = p; }
 auto Node::get_state() -> std::vector<size_t> { return state; }
 auto Node::get_positions() -> std::vector<size_t> { return positions; }
 
-auto Node::queue_front() -> size_t
-{
-    return R.front();
-}
-auto Node::queue_pop() -> void
-{
-    R.pop();
-}
-auto Node::queue_empty() -> bool
-{
-    return R.empty();
-}
+auto Node::queue_front() -> size_t { return R.front(); }
+auto Node::queue_pop() -> void { R.pop(); }
+auto Node::queue_empty() -> bool { return R.empty(); }
