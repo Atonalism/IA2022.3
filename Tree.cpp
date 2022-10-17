@@ -103,15 +103,12 @@ auto Tree::is_in_tree(std::vector<size_t> &v) -> bool
 auto Tree::print_path(Node *p) -> void
 {
     std::vector<size_t> state;
-    while (p != NULL)
+    while (p->get_parent() != NULL)
     {
-        if (p->get_rule() != 4)
-        {
-            state = p->get_state();
-            std::cout << "Rule: R" << p->get_rule() + 1 << "\n";
-            print_vector(state);
-            std::cout << "\n";
-        }
+        state = p->get_state();
+        std::cout << "Rule: R" << p->get_rule() + 1 << "\n";
+        print_vector(state);
+        std::cout << "\n";
         p = p->get_parent();
     }
 }
