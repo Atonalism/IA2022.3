@@ -121,11 +121,13 @@ auto Tree::print_path(Node *p) -> void
         p = p->get_parent();
     }
 
-    std::cout << "Nivel da solucao: " << level << "\n";
+    std::cout << "Nivel da solucao: " << level << "\n\n";
 }
 
 auto Tree::backtracking(size_t p) -> void
 {
+    std::cout << "BUSCA BACKTRACKING:\n";
+
     size_t level_backtracking = 0;
     size_t num_nodes = 0;
     Node *N = initial_state;
@@ -213,6 +215,8 @@ auto Tree::backtracking(size_t p) -> void
 
 auto Tree::bfs() -> void
 {
+    std::cout << "BUSCA EM LARGURA:\n";
+
     std::vector<size_t> aux_state, aux_positions;
     size_t num_nodes = 0;
 
