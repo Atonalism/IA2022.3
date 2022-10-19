@@ -164,6 +164,7 @@ auto Tree::backtracking(size_t p) -> void
                 aux_state = new_node->get_state();
                 if (is_in_tree(aux_state))
                 {
+                    num_nodes++;
                     delete_Node(new_node);
                     continue;
                 }
