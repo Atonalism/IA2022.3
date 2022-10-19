@@ -13,6 +13,7 @@ class Tree
 private:
     Node *initial_state;
     size_t dir;
+    size_t num_nodes;
 
     std::vector<std::vector<size_t>> all_states;
     auto compare_vec(std::vector<size_t> &v1, std::vector<size_t> &v2) -> bool;
@@ -37,6 +38,7 @@ public:
     Tree(size_t dir);
     ~Tree();
 
+    auto get_num_nodes() -> size_t;
     auto backtracking(size_t p) -> void;
     auto bfs() -> void;
     auto dfs() -> void;
