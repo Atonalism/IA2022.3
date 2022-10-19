@@ -115,13 +115,12 @@ auto Tree::print_path(Node *p) -> void
     {
         level++;
         state = p->get_state();
-        std::cout << "Rule: R" << p->get_rule() + 1 << "\n";
+        std::cout << "Regra: R" << p->get_rule() + 1 << "\n";
         print_vector(state);
-        std::cout << "\n";
         p = p->get_parent();
     }
 
-    std::cout << "Nivel da solucao: " << level << "\n\n";
+    std::cout << "\nNivel da solucao: " << level << "\n\n";
 }
 
 auto Tree::backtracking(size_t p) -> void
@@ -199,13 +198,14 @@ auto Tree::backtracking(size_t p) -> void
         }
     }
 
-    std::cout << "\n";
+    std::cout << "\nStatus: ";
     if (failure)
         std::cout << "Falhou\n";
     else if (success)
-        std::cout << "Sucesso!\n";
+        std::cout << "Sucesso\n";
 
-    std::cout << "Nos criados: " << num_nodes << "\n";
+    std::cout << "\n";
+    std::cout << "Nos criados: " << num_nodes << "\n\n";
 
     if (success)
         print_path(N);
@@ -218,7 +218,8 @@ auto Tree::bfs() -> void
     std::cout << "BUSCA EM LARGURA:\n";
 
     std::vector<size_t> aux_state, aux_positions;
-    size_t num_nodes = 0;
+    size_t num_nodes, poda;
+    num_nodes = poda = 0;
 
     std::queue<Node *> abertos, fechados;
     bool sucesso, fracasso;
@@ -256,6 +257,7 @@ auto Tree::bfs() -> void
                         aux_state = new_node->get_state();
                         if (is_in_tree(aux_state))
                         {
+                            poda++;
                             delete_Node(new_node);
                             continue;
                         }
@@ -275,13 +277,16 @@ auto Tree::bfs() -> void
         }
     }
 
-    std::cout << "\n";
+    std::cout << "\nStatus: ";
     if (fracasso)
         std::cout << "Falhou\n";
     else if (sucesso)
-        std::cout << "Sucesso!\n";
+        std::cout << "Sucesso\n";
 
-    std::cout << "Nos criados: " << num_nodes << "\n";
+    std::cout << "\n";
+    std::cout << "Nos na arvore: " << num_nodes << "\n";
+    std::cout << "Nos podados: " << poda << "\n";
+    std::cout << "Nos criados: " << num_nodes + poda << "\n\n";
 
     if (sucesso)
         print_path(N);
