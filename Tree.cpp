@@ -11,6 +11,7 @@ auto print_vector(std::vector<size_t> &v) -> void
 Tree::Tree(size_t dir)
 {
     this->dir = dir;
+    this->num_nodes = 1;
 
     std::vector<size_t> init_state = {1, 0, 2, 0, 3, 0, 4, 0};
     std::vector<size_t> positions = {0, 2, 4, 6};
@@ -66,6 +67,8 @@ auto Tree::create_Node(std::vector<size_t> &state, std::vector<size_t> &position
         return NULL;
     else
     {
+        num_nodes++;
+
         std::vector<size_t> pos = positions;
         std::vector<size_t> s = temp.first;
         pos[r] = temp.second;
@@ -77,6 +80,8 @@ auto Tree::create_Node(std::vector<size_t> &state, std::vector<size_t> &position
 
 auto Tree::delete_Node(Node *p) -> void
 {
+    num_nodes--;
+
     Node *parent = p->get_parent();
     unsigned r = parent->get_rule();
     parent->set_children(NULL, r);
@@ -100,22 +105,29 @@ auto Tree::is_in_tree(std::vector<size_t> &v) -> bool
     return false;
 }
 
+auto Tree::get_num_nodes() -> size_t { return num_nodes; }
+
 auto Tree::print_path(Node *p) -> void
 {
+    size_t level = 0;
     std::vector<size_t> state;
     while (p->get_parent() != NULL)
     {
+        level++;
         state = p->get_state();
         std::cout << "Rule: R" << p->get_rule() + 1 << "\n";
         print_vector(state);
         std::cout << "\n";
         p = p->get_parent();
     }
+
+    std::cout << "Nivel da solucao: " << level << "\n";
 }
 
 auto Tree::backtracking(size_t p) -> void
 {
     size_t level_backtracking = 0;
+    size_t num_nodes = 0;
     Node *N = initial_state;
     bool failure = false;
     bool success = false;
@@ -151,12 +163,13 @@ auto Tree::backtracking(size_t p) -> void
                 aux_state = new_node->get_state();
                 if (is_in_tree(aux_state))
                 {
-                    delete new_node;
+                    delete_Node(new_node);
                     continue;
                 }
                 else
                 {
                     level_backtracking++;
+                    num_nodes++;
                     all_states.push_back(aux_state);
 
                     N->set_children(new_node, 0);
@@ -190,9 +203,83 @@ auto Tree::backtracking(size_t p) -> void
     else if (success)
         std::cout << "Sucesso!\n";
 
-    std::cout << "Nivel = " << level_backtracking << "\n\n";
+    std::cout << "Nos criados: " << num_nodes << "\n";
 
-    if(success)
+    if (success)
+        print_path(N);
+
+    return;
+}
+
+auto Tree::bfs() -> void
+{
+    std::vector<size_t> aux_state, aux_positions;
+    size_t num_nodes = 0;
+
+    std::queue<Node *> abertos, fechados;
+    bool sucesso, fracasso;
+    sucesso = fracasso = false;
+    Node *N;
+    Node *S = initial_state;
+    abertos.push(S);
+
+    while (!(sucesso || fracasso))
+    {
+        if (abertos.empty())
+            fracasso = true;
+        else
+        {
+            N = abertos.front();
+            abertos.pop();
+            aux_state = N->get_state();
+            if (final_state(aux_state))
+                sucesso = true;
+            else
+            {
+                while (!N->queue_empty())
+                {
+                    size_t r = N->queue_front();
+                    N->queue_pop();
+
+                    aux_state = N->get_state();
+                    aux_positions = N->get_positions();
+                    Node *new_node = create_Node(aux_state, aux_positions, N, r);
+
+                    if (new_node == NULL)
+                        continue;
+                    else
+                    {
+                        aux_state = new_node->get_state();
+                        if (is_in_tree(aux_state))
+                        {
+                            delete_Node(new_node);
+                            continue;
+                        }
+                        else
+                        {
+                            num_nodes++;
+
+                            all_states.push_back(aux_state);
+
+                            N->set_children(new_node, r);
+                            abertos.push(new_node);
+                        }
+                    }
+                }
+                fechados.push(N);
+            }
+        }
+    }
+
+    std::cout << "\n";
+    if (fracasso)
+        std::cout << "Falhou\n";
+    else if (sucesso)
+        std::cout << "Sucesso!\n";
+
+    std::cout << "Nos criados: " << num_nodes << "\n";
+
+    if (sucesso)
         print_path(N);
 
     return;
