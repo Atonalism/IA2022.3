@@ -1,5 +1,6 @@
 #include "Tree.h"
 
+// funcao auxiliar para imprimir um vetor
 auto print_vector(std::vector<size_t> &v) -> void
 {
     std::cout << "{ ";
@@ -8,24 +9,34 @@ auto print_vector(std::vector<size_t> &v) -> void
     std::cout << "}\n";
 }
 
+// construtor da arvore que recebe a direcao dos movimentos
 Tree::Tree(size_t dir)
 {
     this->dir = dir;
     this->num_nodes = 1;
 
+    // estado inicial
+    // 1: primeiro cavalo preto; 2: segundo cavalo preto;
+    // 3: primeiro cavalo branco; 4: segundo cavalo branco;
+    // 0: posicao vazia 
     std::vector<size_t> init_state = {1, 0, 2, 0, 3, 0, 4, 0};
+    // posicoes iniciais
     std::vector<size_t> positions = {0, 2, 4, 6};
+    // no que contem o estado inicial
     Node *new_node = new Node(init_state, positions, 4, NULL);
     initial_state = new_node;
 
     all_states.push_back(initial_state->get_state());
 }
 
+// destrutor da arvore
 Tree::~Tree()
 {
     _free(initial_state);
 }
 
+// funcao auxiliar para o destrutor 
+// recursivamente desaloca todos os nos da arvore
 auto Tree::_free(Node *n) -> Node *
 {
     if (n != NULL)
@@ -41,6 +52,8 @@ auto Tree::_free(Node *n) -> Node *
     return NULL;
 }
 
+// recebe um estado e retorna verdadeiro se ele for o estado final
+// falso caso contrario
 auto Tree::final_state(std::vector<size_t> &state) -> bool
 {
     if (state[0] == 3 && state[2] == 4 &&
@@ -49,24 +62,35 @@ auto Tree::final_state(std::vector<size_t> &state) -> bool
     return false;
 }
 
+// funcao que faz o movimento da peca
+// recebe o estado que vai receber o movimento e a posicao da peca que sera movimentada
+// retorna um par com o novo estado e a nova posicao da peca
 auto Tree::make_move(std::vector<size_t> &state, size_t pos) -> std::pair<std::vector<size_t>, size_t>
 {
     std::vector<size_t> new_state = state;
+    // indice da peca apos a movimentacao
     size_t idx = indexes[dir].move(pos);
+    // se a nova posicao da peca for diferente de vazio(0)
+    // movimento invalido, entao retorna par vetor vazio e 0
     if (new_state[idx] != 0)
         return std::make_pair(std::vector<size_t>(), size_t(0));
     else
-        std::swap(new_state[pos], new_state[idx]);
-    return std::make_pair(new_state, idx);
+        std::swap(new_state[pos], new_state[idx]); // caso contrario, movimento valido, trocamos as posicoes e o movimento e feito
+    return std::make_pair(new_state, idx); // retorna o par novo estado e nova posicao
 }
 
+// funcao que cria um novo no, ou seja, um novo estado na arvore
 auto Tree::create_Node(std::vector<size_t> &state, std::vector<size_t> &positions, Node *p, size_t r) -> Node *
 {
+    // fazemos o movimento na regra r
     std::pair<std::vector<size_t>, size_t> temp = make_move(state, positions[r]);
+    // se o vetor retorna for vazio entao o movimento com a regra r e invalido
+    // retorna nulo
     if (temp.first.empty())
         return NULL;
     else
     {
+        // caso contrario, a regra r faz um movimento valido e um novo no e criado
         num_nodes++;
 
         std::vector<size_t> pos = positions;
@@ -78,6 +102,7 @@ auto Tree::create_Node(std::vector<size_t> &state, std::vector<size_t> &position
     }
 }
 
+// funcao que deleta um no
 auto Tree::delete_Node(Node *p) -> void
 {
     num_nodes--;
@@ -89,6 +114,7 @@ auto Tree::delete_Node(Node *p) -> void
     return;
 }
 
+// funcao que compara dois vetores
 auto Tree::compare_vec(std::vector<size_t> &v1, std::vector<size_t> &v2) -> bool
 {
     for (int i = 0; i < v1.size(); ++i)
@@ -97,6 +123,8 @@ auto Tree::compare_vec(std::vector<size_t> &v1, std::vector<size_t> &v2) -> bool
     return true;
 }
 
+// funcao que verifica se um estado esta na arvore
+// usando o vetor aulixar com todos os estados da arvore
 auto Tree::is_in_tree(std::vector<size_t> &v) -> bool
 {
     for (std::vector<size_t> &vec : all_states)
@@ -105,8 +133,10 @@ auto Tree::is_in_tree(std::vector<size_t> &v) -> bool
     return false;
 }
 
+// retorna o numero de nos na arvore
 auto Tree::get_num_nodes() -> size_t { return num_nodes; }
 
+// imprime o caminho de solucao do estado objetivo ate a raiz
 auto Tree::print_path(Node *p) -> void
 {
     size_t level = 0;
@@ -123,12 +153,17 @@ auto Tree::print_path(Node *p) -> void
     std::cout << "\nNivel da solucao: " << level << "\n\n";
 }
 
+// busca backtracking
+// p e o limite de profundidade
 auto Tree::backtracking(size_t p) -> void
 {
     std::cout << "BUSCA BACKTRACKING:\n";
 
+    // nivel da busca
     size_t level_backtracking = 0;
-    size_t num_nodes = 0;
+    // nos deletados
+    size_t nos_deletados = 0;
+    // estado inicial
     Node *N = initial_state;
     bool failure = false;
     bool success = false;
@@ -137,47 +172,61 @@ auto Tree::backtracking(size_t p) -> void
     std::vector<size_t> aux_state;
     std::vector<size_t> aux_positions;
 
+    // enquanto a busca e feita
     while (!(failure || success))
     {
+        // se o nivel for maior que o limite -> impasse
         if (level_backtracking >= p)
         {
+            // retornamos ao no anterior (pai) e deletamos o no impasse
             Node *p = N->get_parent();
+            nos_deletados++;
             delete_Node(N);
             N = p;
 
+            // o nivel diminui
             level_backtracking--;
         }
 
+        // se ainda existem regras aplicaveis no estado do no atual
         if (!(N->queue_empty()))
         {
+            // selecionamos a regra
             size_t r = N->queue_front();
+            // tiramos ela da fila
             N->queue_pop();
 
+            // fazemos o movimento da regra
             aux_state = N->get_state();
             aux_positions = N->get_positions();
             Node *new_node = create_Node(aux_state, aux_positions, N, r);
-
+            
+            // se o novo no e nulo, entao o movimento da regra r e invalido
             if (new_node == NULL)
                 continue;
             else
             {
+                // se o moviemnto e valido, mas ja existe na arvore
                 aux_state = new_node->get_state();
                 if (is_in_tree(aux_state))
                 {
-                    num_nodes++;
+                    // entao o no e deletado e nao e colocado na arvore
+                    nos_deletados++;
                     delete_Node(new_node);
                     continue;
                 }
                 else
                 {
+                    // se o movimento e valido e nao existe na arvore
+                    // entao um novo no e criado na arvore
                     level_backtracking++;
-                    num_nodes++;
                     all_states.push_back(aux_state);
 
                     N->set_children(new_node, 0);
                     N = new_node;
 
                     aux_state = N->get_state();
+                    // se o estado atual e o final, entao sucesso
                     if (final_state(aux_state))
                         success = true;
                 }
@@ -185,12 +234,16 @@ auto Tree::backtracking(size_t p) -> void
         }
         else
         {
+            // se o no atual nao possui mais regras
+            // se o no atual voltou para o estado inicial, entao fracasso
             aux_state = N->get_state();
             if (compare_vec(aux_initial, aux_state))
                 failure = true;
             else
             {
+                // caso contrario, retornamos ao no anterior (pai) e deletamos o no impasse
                 Node *p = N->get_parent();
+                nos_deletados++;
                 delete_Node(N);
                 N = p;
 
@@ -206,7 +259,9 @@ auto Tree::backtracking(size_t p) -> void
         std::cout << "Sucesso\n";
 
     std::cout << "\n";
-    std::cout << "Nos criados: " << num_nodes << "\n\n";
+    std::cout << "Nos na arvore: " << num_nodes << "\n";
+    std::cout << "Nos deletados: " << nos_deletados << "\n";
+    std::cout << "Nos criados: " << num_nodes + nos_deletados << "\n\n";
 
     if (success)
         print_path(N);
@@ -219,8 +274,7 @@ auto Tree::bfs() -> void
     std::cout << "BUSCA EM LARGURA:\n";
 
     std::vector<size_t> aux_state, aux_positions;
-    size_t num_nodes, poda;
-    num_nodes = poda = 0;
+    size_t poda = 0;
 
     std::queue<Node *> abertos, fechados;
     bool sucesso, fracasso;
@@ -264,8 +318,6 @@ auto Tree::bfs() -> void
                         }
                         else
                         {
-                            num_nodes++;
-
                             all_states.push_back(aux_state);
 
                             N->set_children(new_node, r);
