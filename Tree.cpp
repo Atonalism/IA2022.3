@@ -18,7 +18,7 @@ Tree::Tree(size_t dir)
     // estado inicial
     // 1: primeiro cavalo preto; 2: segundo cavalo preto;
     // 3: primeiro cavalo branco; 4: segundo cavalo branco;
-    // 0: posicao vazia 
+    // 0: posicao vazia
     std::vector<size_t> init_state = {1, 0, 2, 0, 3, 0, 4, 0};
     // posicoes iniciais
     std::vector<size_t> positions = {0, 2, 4, 6};
@@ -35,7 +35,7 @@ Tree::~Tree()
     _free(initial_state);
 }
 
-// funcao auxiliar para o destrutor 
+// funcao auxiliar para o destrutor
 // recursivamente desaloca todos os nos da arvore
 auto Tree::_free(Node *n) -> Node *
 {
@@ -76,7 +76,7 @@ auto Tree::make_move(std::vector<size_t> &state, size_t pos) -> std::pair<std::v
         return std::make_pair(std::vector<size_t>(), size_t(0));
     else
         std::swap(new_state[pos], new_state[idx]); // caso contrario, movimento valido, trocamos as posicoes e o movimento e feito
-    return std::make_pair(new_state, idx); // retorna o par novo estado e nova posicao
+    return std::make_pair(new_state, idx);         // retorna o par novo estado e nova posicao
 }
 
 // funcao que cria um novo no, ou seja, um novo estado na arvore
@@ -155,7 +155,7 @@ auto Tree::print_path(Node *p) -> void
 
 // busca backtracking
 // p e o limite de profundidade
-auto Tree::backtracking(size_t p) -> void
+auto Tree::backtracking(size_t limit) -> void
 {
     std::cout << "BUSCA BACKTRACKING:\n";
 
@@ -176,7 +176,7 @@ auto Tree::backtracking(size_t p) -> void
     while (!(failure || success))
     {
         // se o nivel for maior que o limite -> impasse
-        if (level_backtracking >= p)
+        if (level_backtracking >= limit)
         {
             // retornamos ao no anterior (pai) e deletamos o no impasse
             Node *p = N->get_parent();
@@ -200,7 +200,7 @@ auto Tree::backtracking(size_t p) -> void
             aux_state = N->get_state();
             aux_positions = N->get_positions();
             Node *new_node = create_Node(aux_state, aux_positions, N, r);
-            
+
             // se o novo no e nulo, entao o movimento da regra r e invalido
             if (new_node == NULL)
                 continue;
@@ -269,18 +269,40 @@ auto Tree::backtracking(size_t p) -> void
     return;
 }
 
+// funcao auxiliar para imprimir a fila de abertos
+auto Tree::print_abertos(std::queue<Node *> abertos) -> void
+{
+    std::vector<size_t> state;
+    std::cout << "Fila de abertos = { ";
+    while (!abertos.empty())
+    {
+        state = abertos.front()->get_state();
+        std::cout << "( ";
+        for (size_t n : state)
+            std::cout << n << " ";
+        std::cout << ") ";
+        abertos.pop();
+    }
+    std::cout << "}\n";
+}
+
 auto Tree::bfs() -> void
 {
     std::cout << "BUSCA EM LARGURA:\n";
 
     std::vector<size_t> aux_state, aux_positions;
+    // variavel que armazena o numero de podas realizados
     size_t poda = 0;
+    // variavel que armazena o numero de iteracoes que a fila de abertos sera printada
+    size_t iter = 0;
 
+    // fila de abertos e fechados
     std::queue<Node *> abertos, fechados;
     bool sucesso, fracasso;
     sucesso = fracasso = false;
     Node *N;
     Node *S = initial_state;
+    // inicia a fila de abertos com o estado inicial
     abertos.push(S);
 
     while (!(sucesso || fracasso))
@@ -289,13 +311,19 @@ auto Tree::bfs() -> void
             fracasso = true;
         else
         {
+            if (iter < 16)
+                print_abertos(abertos);
+
+            // pega o primeiro elemento da fila
             N = abertos.front();
             abertos.pop();
             aux_state = N->get_state();
+            // verifica se estamos no estado final
             if (final_state(aux_state))
                 sucesso = true;
             else
             {
+                // enquanto o estado atual tiver regras validas para gerar filhos
                 while (!N->queue_empty())
                 {
                     size_t r = N->queue_front();
@@ -303,12 +331,15 @@ auto Tree::bfs() -> void
 
                     aux_state = N->get_state();
                     aux_positions = N->get_positions();
+                    // criamos um novo no com a regra r atual
                     Node *new_node = create_Node(aux_state, aux_positions, N, r);
 
+                    // se o novo no criado for NULL entao a regra e invalida
                     if (new_node == NULL)
                         continue;
                     else
                     {
+                        // se o no ja estiver na arvore ele e podado
                         aux_state = new_node->get_state();
                         if (is_in_tree(aux_state))
                         {
@@ -318,6 +349,7 @@ auto Tree::bfs() -> void
                         }
                         else
                         {
+                            // se nao tiver na arvore o novo no e inserido na arvore e na fila de abertos
                             all_states.push_back(aux_state);
 
                             N->set_children(new_node, r);
@@ -325,9 +357,11 @@ auto Tree::bfs() -> void
                         }
                     }
                 }
+                // quando o no nao possui mais regras ele e colocado na fila de fechados
                 fechados.push(N);
             }
         }
+        iter++;
     }
 
     std::cout << "\nStatus: ";
@@ -345,4 +379,80 @@ auto Tree::bfs() -> void
         print_path(N);
 
     return;
+}
+
+auto Tree::dls(size_t limit) -> int
+{
+    std::cout << "BUSCA EM PROFUNDIDADE:\n";
+    return dls_aux(initial_state, limit, 0);
+}
+
+// funcao recursiva para a busca em profundidade limitada
+auto Tree::dls_aux(Node *N, size_t limit, size_t poda) -> int
+{
+    std::vector<size_t> aux_state, aux_positions;
+    // o novo no e colocado na fila de abertos
+    std::queue<Node *> abertos;
+    abertos.push(N);
+
+    aux_state = N->get_state();
+
+    // se o estado atual e o final, entao sucesso
+    if (final_state(aux_state))
+    {
+        print_abertos(abertos);
+        print_path(N);
+
+        std::cout << "\n";
+        std::cout << "Nos na arvore: " << num_nodes << "\n";
+        std::cout << "Nos podados: " << poda << "\n";
+        std::cout << "Nos criados: " << num_nodes + poda << "\n\n";
+        return 1;
+    }
+
+    // enquanto o no atual tiver regras
+    while (!N->queue_empty())
+    {
+        size_t r = N->queue_front();
+        N->queue_pop();
+
+        aux_state = N->get_state();
+        aux_positions = N->get_positions();
+        // um novo no com o estado gerado pela regra r e criado
+        Node *new_node = create_Node(aux_state, aux_positions, N, r);
+
+        // se o novo no for nulo entao a regra r e invalida
+        if (new_node == NULL)
+            continue;
+        else
+        {
+            aux_state = new_node->get_state();
+            // se o novo no criado ja estiver na arvore ele e podado
+            if (is_in_tree(aux_state))
+            {
+                delete_Node(new_node);
+                poda++;
+                continue;
+            }
+            else
+            {
+                all_states.push_back(aux_state);
+                // o novo no e inserido na arvore e na fila de abertos
+                N->set_children(new_node, r);
+                abertos.push(new_node);
+            }
+        }
+
+        // se a arvore ainda estiver no limite de nivel
+        if (limit > 0)
+        {
+            // continuamos a busca no novo no
+            if (dls_aux(new_node, limit - 1, poda) != -1)
+                return 1;
+        }
+    }
+
+    print_abertos(abertos);
+
+    return -1;
 }

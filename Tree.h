@@ -42,6 +42,9 @@ private:
     // imprime o caminho de solucao
     auto print_path(Node *p) -> void;
 
+    auto dls_aux(Node *N, size_t limit, size_t poda) -> int;
+    auto print_abertos(std::queue<Node *> abertos) -> void;
+
     // movimentos de transicao
     // 0 (horario),  1 (anti-horario)
     moves indexes[2] = {
@@ -55,9 +58,9 @@ public:
     ~Tree();
 
     auto get_num_nodes() -> size_t;
-    auto backtracking(size_t p) -> void;
+    auto backtracking(size_t limit) -> void;
     auto bfs() -> void;
-    auto dfs() -> void;
+    auto dls(size_t limit) -> int;
 };
 
 #endif // TREE_H
